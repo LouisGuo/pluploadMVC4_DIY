@@ -1306,24 +1306,49 @@ plupload.Uploader = function(options) {
 		, features = up.features
 		, offset = 0
 		, blob
-		;
+	    ;
+		
+	    ///////////////////////////////////////////////////////////////////////////////////////oword添加的断点续传逻辑 2015-1-8
+		
+		if (file.name != null) {
+		    
+		    //$.get(url, {
+		    //    checkUploadedBeforeUpload: 1,
+		    //    filename: file.name,
+		    //    chunk_size: up.settings.chunk_size,
+		    //    file_size: file.size
+		    //}, function (data) {
+		    //    //file.loaded = data.offset;
+		    //    if(file.size==data.offset){
+		    //        file.status = plupload.DONE
+		    //    }
+		    //    //offset = file.loaded = chunkSize * Math.floor(data.offset / chunkSize);
+		    //});
+		   
+
+		    //$.ajax({
+		    //    type: "get",
+		    //    url: url,
+		    //    data: {
+		    //        checkUploadedBeforeUpload: 1,
+		    //        filename: file.name,
+		    //        chunk_size: up.settings.chunk_size,
+		    //        file_size: file.size
+		    //    },
+		    //    async: false,
+		    //    success: function (data) {
+		    //        file.loaded = data.offset;
+		    //    }
+		    //});
+		}
+	    ///////////////////////////////////////////////////////////////////////////////////////oword添加的断点续传逻辑
 
 		// make sure we start at a predictable offset
 		if (file.loaded) {
 			offset = file.loaded = chunkSize * Math.floor(file.loaded / chunkSize);
 		}
 
-	    ///////////////////////////////////////////////////////////////////////////////////////oword添加的断点续传逻辑 2015-1-8
-	    if (file.name != null) {
-	        $.get("/Home/CheckFileOffSet", {
-	            filename: file.name,
-	            chunk_size: up.settings.chunk_size,
-                file_size:file.size
-	        }, function (data) {
-	            offset = data.offset;
-	        });
-	    }
-	    ///////////////////////////////////////////////////////////////////////////////////////oword添加的断点续传逻辑
+	    
 
 		function handleError() {
 			if (retries-- > 0) {
@@ -1367,6 +1392,9 @@ plupload.Uploader = function(options) {
 				if (up.settings.send_chunk_number) {
 					args.chunk = Math.ceil(offset / chunkSize);
 					args.chunks = Math.ceil(blob.size / chunkSize);
+                    //2015-1-27 oword 添加总容量参数
+					args.total = blob.size;
+					args.offsetAlready = offset;
 				} else { // keep support for experimental chunk format, just in case
 					args.offset = offset;
 					args.total = blob.size;
@@ -1405,6 +1433,11 @@ plupload.Uploader = function(options) {
 
 					offset += curChunkSize;
 					file.loaded = Math.min(offset, blob.size);
+
+                    //oword 修改动态根据服务器返回结果判断下次上传的位置
+					var returnOffset = eval('('+xhr.response+')').offset;
+					file.loaded = Math.max(file.loaded, returnOffset);
+					offset = Math.max(file.loaded, returnOffset);
 
 				    ////////////////////////////////////////oword修改的触发器参数 2015-1-8
 

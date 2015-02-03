@@ -9,7 +9,11 @@
 
 
 <body style="font: 13px Verdana; background: #eee; color: #333">
-    <h1>Custom example</h1>
+    <h1>Custom example</h1> 
+    已上传：0
+    总容量：10000000000000
+    剩余：<span id="CapacityLeft">1000000000000000</span>
+    本次上传：<span id="CapacityThis">0</span>
     <p>Shows you how to use the core plupload API.</p>
     <div id="filelist">Your browser doesn't have Flash, Silverlight or HTML5 support.</div>
     <br />
@@ -36,6 +40,7 @@
             filters: {
 
                 mime_types: [
+                    { title: "DNA files", extensions: "fa" },
                     { title: "Image files", extensions: "jpg,gif,png" },
                     { title: "Video files", extensions: "rmvb,mkv,mp4" },
                     { title: "Zip files", extensions: "zip" }
@@ -54,8 +59,28 @@
 
                 FilesAdded: function (up, files) {
                     plupload.each(files, function (file) {
-                        document.getElementById('filelist').innerHTML += '<div id="' + file.id + '">' + file.name + ' (' + plupload.formatSize(file.size) + ') <b></b></div>';
+                        var CapacityLeft = parseInt(document.getElementById('CapacityLeft').innerText);
+                        var CapacityThis = parseInt(document.getElementById('CapacityThis').innerText);
+
+                        if(CapacityLeft-CapacityThis-file.size>=0){
+                            document.getElementById('filelist').innerHTML += '<div id="' + file.id + '">' + file.name + ' (' + plupload.formatSize(file.size) + ') <b></b></div>';
+
+                            document.getElementById('CapacityThis').innerText = CapacityThis + file.size;
+                        } else {
+                            up.removeFile(file);
+                            alert('您的容量不足');
+                            
+                        }
+
+                        
                     });
+
+
+                },
+
+                BeforeUpload: function (uploader, file) {
+                    var size = file.size;
+
                 },
 
                 UploadProgress: function (up, file,bytesPerSec) {
@@ -90,6 +115,17 @@
         });
 
         uploader.init();
+
+        $(document).on('click', '#filelist div', function () {
+
+            var file = uploader.getFile(this.id);
+            
+            uploader.removeFile(file);
+            var CapacityThis = parseInt(document.getElementById('CapacityThis').innerText);
+            document.getElementById('CapacityThis').innerText = CapacityThis - file.size;
+            $(this).remove();
+
+        });
 
     </script>
 </body>
